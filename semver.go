@@ -1,9 +1,7 @@
 package semver
 
 import (
-	"errors"
 	"fmt"
-	"regexp"
 	"strconv"
 	"strings"
 )
@@ -19,31 +17,8 @@ type Version struct {
 
 // ParseVersion parses a semantic version string and returns a Version struct or an error if the version is invalid.
 func ParseVersion(version string) (*Version, error) {
-	// Define the regex pattern for a valid semantic version based on the provided BNF grammar.
-	var semverRegex = `^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)` +
-		`(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?` +
-		`(?:\+([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$`
-
-	re := regexp.MustCompile(semverRegex)
-	matches := re.FindStringSubmatch(version)
-
-	if matches == nil {
-		return nil, errors.New("invalid version")
-	}
-
-	major, _ := strconv.Atoi(matches[1])
-	minor, _ := strconv.Atoi(matches[2])
-	patch, _ := strconv.Atoi(matches[3])
-	preRelease := matches[4]
-	build := matches[5]
-
-	return &Version{
-		Major:      major,
-		Minor:      minor,
-		Patch:      patch,
-		PreRelease: preRelease,
-		Build:      build,
-	}, nil
+	p := NewParser(version)
+	return p.ParseVersion()
 }
 
 // String returns the string representation of the Version.
@@ -60,12 +35,10 @@ func (v *Version) String() string {
 
 // compareIdentifiers compares two identifiers according to SemVer rules.
 func compareIdentifiers(a, b string) int {
-	aIsNumeric := isNumeric(a)
-	bIsNumeric := isNumeric(b)
+	aNum, aIsNumeric := checkNumeric(a)
+	bNum, bIsNumeric := checkNumeric(b)
 
 	if aIsNumeric && bIsNumeric {
-		aNum, _ := strconv.Atoi(a)
-		bNum, _ := strconv.Atoi(b)
 		return compareInts(aNum, bNum)
 	}
 
@@ -85,10 +58,9 @@ func compareIdentifiers(a, b string) int {
 	return 0
 }
 
-// isNumeric checks if a string consists only of digits.
-func isNumeric(s string) bool {
-	_, err := strconv.Atoi(s)
-	return err == nil
+func checkNumeric(s string) (int, bool) {
+	i, err := strconv.Atoi(s)
+	return i, err == nil
 }
 
 // compareInts compares two integers.

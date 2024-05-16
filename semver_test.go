@@ -6,7 +6,60 @@ import (
 	"github.com/networkteam/semver"
 )
 
-// TestBefore is a table-driven test for the Before method of the Version struct.
+func TestParseVersion(t *testing.T) {
+	tests := []struct {
+		version     string
+		major       int
+		minor       int
+		patch       int
+		preRelease  string
+		build       string
+		expectedErr string
+	}{
+		{"1.0.0", 1, 0, 0, "", "", ""},
+		{"1.00.0", 1, 0, 0, "", "", "invalid version core: minor: leading zero is not allowed (at position 2)"},
+		{"1.2.3", 1, 2, 3, "", "", ""},
+		{"0.1.0", 0, 1, 0, "", "", ""},
+		{"1.0.", 1, 0, 0, "", "", "invalid version core: patch: unexpected end of input (at position 4)"},
+		{"1.0.0-beta.2", 1, 0, 0, "beta.2", "", ""},
+		{"1.0.0-alpha+001", 1, 0, 0, "alpha", "001", ""},
+		{"1.0.0+20130313144700", 1, 0, 0, "", "20130313144700", ""},
+		{"1.0.0-beta+exp.sha.5114f85", 1, 0, 0, "beta", "exp.sha.5114f85", ""},
+		{"1.0.0+21AF26D3----117B344092BD", 1, 0, 0, "", "21AF26D3----117B344092BD", ""},
+	}
+
+	for _, test := range tests {
+		t.Run(test.version, func(t *testing.T) {
+			v, err := semver.ParseVersion(test.version)
+			if err != nil {
+				if test.expectedErr == "" {
+					t.Errorf("Unexpected error: %v", err)
+				}
+				if err.Error() != test.expectedErr {
+					t.Errorf("Expected error %q, got %q", test.expectedErr, err)
+				}
+				return
+			}
+
+			if v.Major != test.major {
+				t.Errorf("Expected major version %d, got %d", test.major, v.Major)
+			}
+			if v.Minor != test.minor {
+				t.Errorf("Expected minor version %d, got %d", test.minor, v.Minor)
+			}
+			if v.Patch != test.patch {
+				t.Errorf("Expected patch version %d, got %d", test.patch, v.Patch)
+			}
+			if v.PreRelease != test.preRelease {
+				t.Errorf("Expected pre-release version %q, got %q", test.preRelease, v.PreRelease)
+			}
+			if v.Build != test.build {
+				t.Errorf("Expected build version %q, got %q", test.build, v.Build)
+			}
+		})
+	}
+}
+
 func TestBefore(t *testing.T) {
 	tests := []struct {
 		v1       string
@@ -33,25 +86,26 @@ func TestBefore(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		v1, err1 := semver.ParseVersion(test.v1)
-		if err1 != nil {
-			t.Errorf("Error parsing version %s: %v", test.v1, err1)
-			continue
-		}
-		v2, err2 := semver.ParseVersion(test.v2)
-		if err2 != nil {
-			t.Errorf("Error parsing version %s: %v", test.v2, err2)
-			continue
-		}
+		t.Run(test.v1+" < "+test.v2, func(t *testing.T) {
+			v1, err1 := semver.ParseVersion(test.v1)
+			if err1 != nil {
+				t.Errorf("Error parsing version %q: %v", test.v1, err1)
+				return
+			}
+			v2, err2 := semver.ParseVersion(test.v2)
+			if err2 != nil {
+				t.Errorf("Error parsing version %q: %v", test.v2, err2)
+				return
+			}
 
-		result := v1.Before(v2)
-		if result != test.expected {
-			t.Errorf("Expected %v.Before(%v) to be %v, got %v", test.v1, test.v2, test.expected, result)
-		}
+			result := v1.Before(v2)
+			if result != test.expected {
+				t.Errorf("Expected %q.Before(%q) to be %v, got %v", test.v1, test.v2, test.expected, result)
+			}
+		})
 	}
 }
 
-// TestEquals is a table-driven test for the Equals method of the Version struct.
 func TestEquals(t *testing.T) {
 	tests := []struct {
 		v1       string
@@ -70,20 +124,22 @@ func TestEquals(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		v1, err1 := semver.ParseVersion(test.v1)
-		if err1 != nil {
-			t.Errorf("Error parsing version %s: %v", test.v1, err1)
-			continue
-		}
-		v2, err2 := semver.ParseVersion(test.v2)
-		if err2 != nil {
-			t.Errorf("Error parsing version %s: %v", test.v2, err2)
-			continue
-		}
+		t.Run(test.v1+" == "+test.v2, func(t *testing.T) {
+			v1, err1 := semver.ParseVersion(test.v1)
+			if err1 != nil {
+				t.Errorf("Error parsing version %q: %v", test.v1, err1)
+				return
+			}
+			v2, err2 := semver.ParseVersion(test.v2)
+			if err2 != nil {
+				t.Errorf("Error parsing version %q: %v", test.v2, err2)
+				return
+			}
 
-		result := v1.Equals(v2)
-		if result != test.expected {
-			t.Errorf("Expected %v.Equals(%v) to be %v, got %v", test.v1, test.v2, test.expected, result)
-		}
+			result := v1.Equals(v2)
+			if result != test.expected {
+				t.Errorf("Expected %q.Equals(%q) to be %v, got %v", test.v1, test.v2, test.expected, result)
+			}
+		})
 	}
 }
