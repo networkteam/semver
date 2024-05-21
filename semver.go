@@ -118,7 +118,7 @@ func comparePreRelease(a, b string) int {
 	return 0
 }
 
-// Equals determines if this version is equal to the provided version.
+// Equals determines if this version is equal to the provided version (ignoring the build metadata).
 func (v *Version) Equals(other *Version) bool {
 	return v.Major == other.Major &&
 		v.Minor == other.Minor &&
@@ -126,7 +126,7 @@ func (v *Version) Equals(other *Version) bool {
 		v.PreRelease == other.PreRelease
 }
 
-// Before determines if this version is before the provided version.
+// Before determines if this version is before the provided version (ignoring the build metadata).
 func (v *Version) Before(other *Version) bool {
 	if v.Major != other.Major {
 		return v.Major < other.Major
