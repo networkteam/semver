@@ -59,8 +59,18 @@ func compareIdentifiers(a, b string) int {
 }
 
 func checkNumeric(s string) (int, bool) {
-	i, err := strconv.Atoi(s)
-	return i, err == nil
+	// Use the grammar rules to check if the string is a number (no leading zeros):
+	for i, c := range s {
+		if i == 0 && c == '0' && len(s) > 1 {
+			return 0, false
+		}
+		if c < '0' || c > '9' {
+			return 0, false
+		}
+	}
+
+	n, err := strconv.Atoi(s)
+	return n, err == nil
 }
 
 // compareInts compares two integers.

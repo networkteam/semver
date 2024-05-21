@@ -83,6 +83,7 @@ func TestBefore(t *testing.T) {
 		{"2.0.0", "1.0.0", false},
 		{"1.1.0", "1.0.0", false},
 		{"1.0.1", "1.0.0", false},
+		{"1.2.3", "1.3.0-rc.1", true},
 	}
 
 	for _, test := range tests {
